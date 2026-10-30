@@ -1,0 +1,15 @@
+pandas
+numpy
+scikit-learn
+xgboost
+pymongo[srv]
+certifi
+python-dotenv
+pyyaml
+mlflow
+dagshub
+fastapi
+uvicorn[standard]
+python-multipart
+ucimlrepo
+setuptools
