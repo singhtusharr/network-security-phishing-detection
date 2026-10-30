@@ -57,6 +57,10 @@ SAVED_MODEL_MODEL_DIR = os.path.join(SAVED_MODEL_DIR, PIPELINE_NAME)
 
 # --- MLflow ---
 MLFLOW_EXPERIMENT_NAME = "NetworkSecurityPhishingDetection"
+# Name of the model in the MLflow Model Registry, and the alias that points at
+# the version currently considered "production" (newest version that passed the F1 gate).
+MLFLOW_REGISTERED_MODEL_NAME = "NetworkSecurityPhishingModel"
+MLFLOW_PRODUCTION_ALIAS = "champion"
 
 # --- AWS S3 (model pusher's final artifact sync) ---
 TRAINING_BUCKET_NAME = "networksecurity-model-artifacts"

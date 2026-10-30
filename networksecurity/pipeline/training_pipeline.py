@@ -8,6 +8,8 @@ retraining job would call.
 import os
 import sys
 
+from dotenv import load_dotenv
+
 from networksecurity.components.data_ingestion import DataIngestion
 from networksecurity.components.data_transformation import DataTransformation
 from networksecurity.components.data_validation import DataValidation
@@ -22,6 +24,9 @@ from networksecurity.entity.config_entity import (
 )
 from networksecurity.exception.exception import NetworkSecurityException
 from networksecurity.logging.logger import logging
+
+# Makes MONGO_DB_URL / MLFLOW_TRACKING_URI from .env visible to os.getenv below.
+load_dotenv()
 
 
 class TrainingPipeline:

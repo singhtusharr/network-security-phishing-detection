@@ -18,12 +18,18 @@ jobs:
         run: pip install -r requirements.txt
       - name: Lint with flake8
         run: pip install flake8 && flake8 networksecurity --count --select=E9,F63,F7,F82 --show-source --statistics
+      - name: Run unit tests
+        run: pip install pytest && python -m pytest -q
       - name: Build Docker image (sanity check)
         run: docker build -t networksecurity:ci .
 
   continuous-delivery:
     needs: continuous-integration
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # The AWS jobs only run once AWS is set up: add the repository secrets
+    # (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, ECR_REPOSITORY_NAME) and then
+    # a repository variable ENABLE_AWS_DEPLOY = true (Settings -> Secrets and variables -> Actions).
+    # Until then this job (and the deployment job that needs it) are skipped, not failed.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.ENABLE_AWS_DEPLOY == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

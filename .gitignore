@@ -12,3 +12,6 @@ mlflow.db
 *.egg-info/
 Network_Data/
 .claude/launch.json
+.pytest_cache/
+.DS_Store
+*.pdf

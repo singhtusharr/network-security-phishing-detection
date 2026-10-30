@@ -40,23 +40,30 @@ S3 (optional, if AWS configured) ──► Docker ──► GitHub Actions ─�
 - **KNNImputer over SimpleImputer**: these phishing-indicator features are
   correlated with each other, so a similar row's values are a better guess
   for a missing value than the column mean.
-- **5 candidate algorithms with GridSearchCV**: Logistic Regression, Decision
+- **6 candidate algorithms with GridSearchCV**: Logistic Regression, Decision
   Tree, Random Forest, Gradient Boosting, AdaBoost, and XGBoost are each
   hyperparameter-tuned, then compared on held-out test F1 — "Model Trainer
   And Evaluation With Hyperparameter Tuning" means a real per-algorithm grid
   search and comparison, not one `.fit()` call.
-- **MLflow experiment tracking**: every training run's params/metrics/model
-  are logged, so you can compare runs instead of relying on memory/print
-  statements. Works identically against local file storage or a DagsHub
-  remote — only `MLFLOW_TRACKING_URI` changes.
+- **MLflow tracking + model registry**: every training run's metrics and
+  model are logged, and the winning model is **registered** as
+  `NetworkSecurityPhishingModel` (a new version per training run that clears
+  the F1 gate); the `champion` alias always points at the newest passing
+  version. By default this is local (`mlflow.db` + `mlruns/`). To host it on
+  DagsHub instead, create a DagsHub repo and set `DAGSHUB_REPO_OWNER`,
+  `DAGSHUB_REPO_NAME` (and `DAGSHUB_USER_TOKEN`) in `.env` — the code calls
+  `dagshub.init(..., mlflow=True)` when those are present.
 - **NetworkModel wrapper**: bundles the fitted preprocessor + classifier into
   one pickled object, so inference code can never apply the model to
   un-preprocessed input or mismatch a preprocessor/model pair.
-- **S3 sync / Docker / GitHub Actions / EC2**: the Model Pusher syncs
-  artifacts to S3, GitHub Actions builds+pushes a Docker image to ECR on
-  every push to `main`, and a self-hosted runner on the EC2 box pulls and
-  restarts the container — full CI/CD, matching the resume's deployment
-  claim.
+- **Docker + GitHub Actions**: the workflow runs CI on every push (flake8,
+  the pytest unit tests in `tests/`, and a Docker build). The **delivery**
+  job (build + push the image to AWS ECR) and the **deployment** job (a
+  self-hosted runner on EC2 pulls and restarts the container) are written but
+  only run after you add the AWS repository secrets and set the repository
+  variable `ENABLE_AWS_DEPLOY=true`; until then they are skipped, not failed.
+  Training also tries `aws s3 sync` for artifacts, and just logs a warning if
+  the AWS CLI is not configured.
 
 ## Setup
 
@@ -67,10 +74,9 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-`.env`:
+`.env` (see `.env.example` for every option):
 ```
 MONGO_DB_URL=mongodb://localhost:27017      # or a MongoDB Atlas connection string
-MLFLOW_TRACKING_URI=                         # leave blank for local ./mlruns, or set to a DagsHub remote
 ```
 
 Local MongoDB via Docker (no Atlas account needed):
@@ -91,6 +97,13 @@ python main.py
 uvicorn app:app --reload
 # GET  /train    -> retrain from scratch
 # POST /predict  -> upload a CSV, get phishing/legitimate predictions
+```
+
+## Tests
+
+```bash
+pip install pytest
+python -m pytest -q        # 11 fast unit tests; no MongoDB or AWS needed
 ```
 
 ## Study notebook
